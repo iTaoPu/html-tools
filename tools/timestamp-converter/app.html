@@ -268,7 +268,7 @@
             const timestampMs = now;
 
             document.getElementById('current-timestamp').textContent = timestampSeconds;
-            document.getElementById('current-datetime').textContent = formatDateTime(now);
+            document.getElementById('current-datetime').textContent = formatDateTime(timestampMs, true);
         }
 
         // 格式化日期时间

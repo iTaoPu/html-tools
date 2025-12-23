@@ -188,6 +188,30 @@
             margin-bottom: 20px;
         }
 
+        .sort-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-muted);
+        }
+
+        .sort-select {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 14px;
+            padding: 12px 4px 12px 0;
+            cursor: pointer;
+        }
+
+        .sort-select:focus {
+            outline: none;
+        }
+
         .search-input-wrapper {
             flex: 1;
             position: relative;
@@ -248,7 +272,7 @@
 
         /* Tools Grid */
         .tools-section {
-            padding: 40px 0 80px;
+            padding: 30px 0 70px;
         }
 
         .section-header {
@@ -273,6 +297,7 @@
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
         }
+
 
         .tool-card {
             background: var(--bg-card);
@@ -330,6 +355,19 @@
             display: flex;
             align-items: center;
             gap: 4px;
+        }
+
+        .tool-updated {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .tool-updated i {
+            font-size: 12px;
         }
 
         .tool-description {
@@ -537,6 +575,13 @@
                         <i class="fas fa-search search-icon"></i>
                         <input type="text" class="search-input" id="search-input" placeholder="搜索工具名称、描述或标签...">
                     </div>
+                    <div class="sort-wrapper">
+                        <i class="far fa-clock"></i>
+                        <select class="sort-select" id="sort-select">
+                            <option value="updated-desc">更新时间：新 → 旧</option>
+                            <option value="updated-asc">更新时间：旧 → 新</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="category-tabs" id="category-tabs">
                     <button class="category-tab active" data-category="all">
@@ -609,6 +654,7 @@
         let toolsData = null;
         let currentCategory = 'all';
         let searchQuery = '';
+        let sortOption = 'updated-desc';
 
         async function loadTools() {
             try {
@@ -641,6 +687,8 @@
                     <i class="fas fa-th-large"></i> 全部
                 </button>
             `;
+            const allButton = container.querySelector('[data-category="all"]');
+            allButton.addEventListener('click', () => selectCategory('all'));
 
             toolsData.categories.forEach(cat => {
                 const btn = document.createElement('button');
@@ -661,7 +709,7 @@
         }
 
         function filterTools() {
-            return toolsData.tools.filter(tool => {
+            const filtered = toolsData.tools.filter(tool => {
                 const matchesCategory = currentCategory === 'all' || tool.category === currentCategory;
                 const matchesSearch = !searchQuery ||
                     tool.name.toLowerCase().includes(searchQuery) ||
@@ -669,6 +717,11 @@
                     tool.tags.some(tag => tag.toLowerCase().includes(searchQuery));
                 return matchesCategory && matchesSearch;
             });
+            const withTimestamp = (tool) => new Date(tool.updatedAt || tool.createdAt || 0).getTime();
+            if (sortOption === 'updated-asc') {
+                return filtered.sort((a, b) => withTimestamp(a) - withTimestamp(b));
+            }
+            return filtered.sort((a, b) => withTimestamp(b) - withTimestamp(a));
         }
 
         function renderTools() {
@@ -689,6 +742,7 @@
 
             container.innerHTML = filteredTools.map(tool => {
                 const category = toolsData.categories.find(c => c.id === tool.category);
+                const updatedAt = tool.updatedAt || tool.createdAt || '未知';
                 return `
                     <a href="${tool.detail}" class="tool-card" style="--tool-color: ${tool.color}">
                         ${tool.featured ? '<span class="featured-badge">精选</span>' : ''}
@@ -699,6 +753,7 @@
                             <div class="tool-info">
                                 <div class="tool-title">${tool.name}</div>
                                 <div class="tool-category">${category?.icon || ''} ${category?.name || '未分类'}</div>
+                                <div class="tool-updated"><i class="far fa-clock"></i> ${updatedAt}</div>
                             </div>
                         </div>
                         <div class="tool-description">${tool.description}</div>
@@ -713,9 +768,15 @@
             }).join('');
         }
 
+
         // Search functionality
         document.getElementById('search-input').addEventListener('input', (e) => {
             searchQuery = e.target.value.toLowerCase();
+            renderTools();
+        });
+
+        document.getElementById('sort-select').addEventListener('change', (e) => {
+            sortOption = e.target.value;
             renderTools();
         });
 
