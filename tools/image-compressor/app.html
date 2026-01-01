@@ -222,6 +222,7 @@
         const downloadLink = document.getElementById('download');
         let image = new Image();
         let originalSize = 0;
+        let currentBlobUrl = null;
 
         function formatBytes(bytes) {
             if (!bytes) return '--';
@@ -280,9 +281,13 @@
                     }, format, quality);
                 }
             }).then((blob) => {
+                // 释放之前的 blob URL
+                if (currentBlobUrl) {
+                    URL.revokeObjectURL(currentBlobUrl);
+                }
                 const url = URL.createObjectURL(blob);
+                currentBlobUrl = url;
                 const previewImg = new Image();
-                previewImg.onload = () => URL.revokeObjectURL(url);
                 previewImg.src = url;
                 preview.innerHTML = '';
                 preview.appendChild(previewImg);
